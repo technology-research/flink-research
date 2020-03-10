@@ -26,13 +26,16 @@ import java.io.IOException;
 
 
 /**
+ * 该接口定义了一些内存的视图，该视图可用于将内容顺序写入该内存
  * This interface defines a view over some memory that can be used to sequentially write contents to the memory.
+ * 该视图通常由一个或多个{@link org.apache.flink.core.memory.MemorySegment}支持。
  * The view is typically backed by one or more {@link org.apache.flink.core.memory.MemorySegment}.
  */
 @Public
 public interface DataOutputView extends DataOutput, MemorySegmentWritable {
 
 	/**
+	 * 跳过n个字节写入
 	 * Skips {@code numBytes} bytes memory. If some program reads the memory that was skipped over, the
 	 * results are undefined.
 	 *
@@ -57,7 +60,9 @@ public interface DataOutputView extends DataOutput, MemorySegmentWritable {
 	@PublicEvolving
 	@Override
 	default void write(MemorySegment segment, int off, int len) throws IOException {
+		//默认写入方法，从off到len写入
 		for (int i = off; i < off + len; i++) {
+			//内存段里得到数据写入
 			write(segment.get(i));
 		}
 	}

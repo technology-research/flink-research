@@ -36,17 +36,21 @@ import org.apache.flink.api.common.state.OperatorStateStore;
 public interface ManagedInitializationContext {
 
 	/**
+	 * true，如果状态是restored存储来自上一个执行的快照。
+	 * false代表无状态任务
 	 * Returns true, if state was restored from the snapshot of a previous execution. This returns always false for
 	 * stateless tasks.
 	 */
 	boolean isRestored();
 
 	/**
+	 * 返回一个接口运行注册operator state到状态后端
 	 * Returns an interface that allows for registering operator state with the backend.
 	 */
 	OperatorStateStore getOperatorStateStore();
 
 	/**
+	 * 运行注册keyed state到状态后端
 	 * Returns an interface that allows for registering keyed state with the backend.
 	 */
 	KeyedStateStore getKeyedStateStore();

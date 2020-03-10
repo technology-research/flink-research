@@ -28,9 +28,11 @@ import org.apache.flink.streaming.api.watermark.Watermark;
 import java.io.Serializable;
 
 /**
+ * Flink中所有流数据源的基本接口。一个流数据的要求是下列：当数据源发送数据时，#run方法调用伴随着参数SourceContext它用于输出元素。
  * Base interface for all stream data sources in Flink. The contract of a stream source
  * is the following: When the source should start emitting elements, the {@link #run} method
  * is called with a {@link SourceContext} that can be used for emitting elements.
+ * run方法可以运行尽可能长的时间。
  * The run method can run for as long as necessary. The source must, however, react to an
  * invocation of {@link #cancel()} by breaking out of its main loop.
  *
@@ -48,6 +50,7 @@ import java.io.Serializable;
  *      private long count = 0L;
  *      private volatile boolean isRunning = true;
  *
+ * 	   //checkpoint数量 状态列表
  *      private transient ListState<Long> checkpointedCount;
  *
  *      public void run(SourceContext<T> ctx) {
@@ -64,8 +67,9 @@ import java.io.Serializable;
  *      public void cancel() {
  *          isRunning = false;
  *      }
- *
+ *    //初始化状态
  *      public void initializeState(FunctionInitializationContext context) {
+ *      //得到getOperator State
  *          this.checkpointedCount = context
  *              .getOperatorStateStore()
  *              .getListState(new ListStateDescriptor<>("count", Long.class));
@@ -76,7 +80,7 @@ import java.io.Serializable;
  *              }
  *          }
  *      }
- *
+ * 		//快照状态
  *      public void snapshotState(FunctionSnapshotContext context) {
  *          this.checkpointedCount.clear();
  *          this.checkpointedCount.add(count);
@@ -102,7 +106,6 @@ import java.io.Serializable;
  * of state updates and element emission.
  *
  * @param <T> The type of the elements produced by this source.
- *
  * @see org.apache.flink.api.common.functions.StoppableFunction
  * @see org.apache.flink.streaming.api.TimeCharacteristic
  */
@@ -188,7 +191,8 @@ public interface SourceFunction<T> extends Function, Serializable {
 	 *
 	 * @param <T> The type of the elements produced by the source.
 	 */
-	@Public // Interface might be extended in the future with additional methods.
+	@Public
+		// Interface might be extended in the future with additional methods.
 	interface SourceContext<T> {
 
 		/**
@@ -198,42 +202,45 @@ public interface SourceFunction<T> extends Function, Serializable {
 		 * <p>The timestamp that the element will get assigned depends on the time characteristic of
 		 * the streaming program:
 		 * <ul>
-		 *     <li>On {@link TimeCharacteristic#ProcessingTime}, the element has no timestamp.</li>
-		 *     <li>On {@link TimeCharacteristic#IngestionTime}, the element gets the system's
-		 *         current time as the timestamp.</li>
-		 *     <li>On {@link TimeCharacteristic#EventTime}, the element will have no timestamp initially.
-		 *         It needs to get a timestamp (via a {@link TimestampAssigner}) before any time-dependent
-		 *         operation (like time windows).</li>
+		 * <li>On {@link TimeCharacteristic#ProcessingTime}, the element has no timestamp.</li>
+		 * <li>On {@link TimeCharacteristic#IngestionTime}, the element gets the system's
+		 * current time as the timestamp.</li>
+		 * <li>On {@link TimeCharacteristic#EventTime}, the element will have no timestamp initially.
+		 * It needs to get a timestamp (via a {@link TimestampAssigner}) before any time-dependent
+		 * operation (like time windows).</li>
 		 * </ul>
+		 * 传输数据方法
 		 *
 		 * @param element The element to emit
 		 */
 		void collect(T element);
 
 		/**
+		 * 输出一个原属来着这个数据源，并且附加给定一个时间戳，这个方法与使用TimeCharacteristic#EventTime相关，数据源自己分配时间戳，而不是依靠流上的{@link TimestampAssigner} 。
 		 * Emits one element from the source, and attaches the given timestamp. This method
 		 * is relevant for programs using {@link TimeCharacteristic#EventTime}, where the
 		 * sources assign timestamps themselves, rather than relying on a {@link TimestampAssigner}
 		 * on the stream.
-		 *
+		 * 在某些时间特性里，这个时间戳可能被忽略或覆盖。这是运行程序切换在不同的时间特性和源函数的行为没有改变的代码。
 		 * <p>On certain time characteristics, this timestamp may be ignored or overwritten.
 		 * This allows programs to switch between the different time characteristics and behaviors
 		 * without changing the code of the source functions.
 		 * <ul>
-		 *     <li>On {@link TimeCharacteristic#ProcessingTime}, the timestamp will be ignored,
-		 *         because processing time never works with element timestamps.</li>
-		 *     <li>On {@link TimeCharacteristic#IngestionTime}, the timestamp is overwritten with the
-		 *         system's current time, to realize proper ingestion time semantics.</li>
-		 *     <li>On {@link TimeCharacteristic#EventTime}, the timestamp will be used.</li>
+		 * <li>On {@link TimeCharacteristic#ProcessingTime}, the timestamp will be ignored,
+		 * because processing time never works with element timestamps.</li>
+		 * <li>On {@link TimeCharacteristic#IngestionTime}, the timestamp is overwritten with the
+		 * system's current time, to realize proper ingestion time semantics.</li>
+		 * <li>On {@link TimeCharacteristic#EventTime}, the timestamp will be used.</li>
 		 * </ul>
 		 *
-		 * @param element The element to emit
-		 * @param timestamp The timestamp in milliseconds since the Epoch
+		 * @param element   The element to emit 输出的元素
+		 * @param timestamp The timestamp in milliseconds since the Epoch 用于watermark使用
 		 */
 		@PublicEvolving
 		void collectWithTimestamp(T element, long timestamp);
 
 		/**
+		 * 输出watermark， 一个watermark的值声明不会再出现带有时间戳{@code t'<= t}的*元素。
 		 * Emits the given {@link Watermark}. A Watermark of value {@code t} declares that no
 		 * elements with a timestamp {@code t' <= t} will occur any more. If further such
 		 * elements will be emitted, those elements are considered <i>late</i>.
@@ -267,6 +274,7 @@ public interface SourceFunction<T> extends Function, Serializable {
 		 * Returns the checkpoint lock. Please refer to the class-level comment in
 		 * {@link SourceFunction} for details about how to write a consistent checkpointed
 		 * source.
+		 * 这个对象作为锁
 		 *
 		 * @return The object to use as the lock
 		 */

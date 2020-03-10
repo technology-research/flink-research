@@ -26,10 +26,12 @@ import java.io.OutputStream;
 
 /**
  * Utility class that turns an {@link OutputStream} into a {@link DataOutputView}.
+ * 将OutputStream转换为实际需要的DataOutputView
  */
 @PublicEvolving
 public class DataOutputViewStreamWrapper extends DataOutputStream implements DataOutputView {
 
+	//临时的字节数组缓存
 	private byte[] tempBuffer;
 
 	public DataOutputViewStreamWrapper(OutputStream out) {
@@ -38,11 +40,13 @@ public class DataOutputViewStreamWrapper extends DataOutputStream implements Dat
 
 	@Override
 	public void skipBytesToWrite(int numBytes) throws IOException {
+		//为null申请新的缓存
 		if (tempBuffer == null) {
 			tempBuffer = new byte[4096];
 		}
-
+		//如果跳过的字节大于0
 		while (numBytes > 0) {
+			//得到写入的数据，忽略的元素去掉
 			int toWrite = Math.min(numBytes, tempBuffer.length);
 			write(tempBuffer, 0, toWrite);
 			numBytes -= toWrite;
