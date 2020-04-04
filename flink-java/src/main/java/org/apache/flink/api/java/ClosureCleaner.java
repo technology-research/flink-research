@@ -101,6 +101,10 @@ public class ClosureCleaner {
 		}
 	}
 
+	/**
+	 * 保证其被序列化
+	 * @param obj
+	 */
 	public static void ensureSerializable(Object obj) {
 		try {
 			InstantiationUtil.serializeObject(obj);

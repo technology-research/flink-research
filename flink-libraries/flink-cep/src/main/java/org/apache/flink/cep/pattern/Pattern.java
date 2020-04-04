@@ -32,8 +32,10 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Preconditions;
 
 /**
+ * 模式定义的基础类
  * Base class for a pattern definition.
  *
+ * 一个模式定义被用于NFACompiler去创建一个NFA（有限自动机模型）
  * <p>A pattern definition is used by {@link org.apache.flink.cep.nfa.compiler.NFACompiler} to create a {@link NFA}.
  *
  * <p><pre>{@code
@@ -43,35 +45,37 @@ import org.apache.flink.util.Preconditions;
  * }
  * </pre>
  *
- * @param <T> Base type of the elements appearing in the pattern
- * @param <F> Subtype of T to which the current pattern operator is constrained
+ * @param <T> Base type of the elements appearing in the pattern 模式中出现的元素的基本类型
+ * @param <F> Subtype of T to which the current pattern operator is constrained 当前模式运算符约束到的T的子类型
  */
 public class Pattern<T, F extends T> {
 
-	/** Name of the pattern. */
+	/** Name of the pattern. 模式名称 */
 	private final String name;
 
-	/** Previous pattern. */
+	/** Previous pattern. 上一个模式 */
 	private final Pattern<T, ? extends T> previous;
 
-	/** The condition an event has to satisfy to be considered a matched. */
+	/** The condition an event has to satisfy to be considered a matched. 事件必须满足的条件才能视为匹配。 */
 	private IterativeCondition<F> condition;
 
-	/** Window length in which the pattern match has to occur. */
+	/** Window length in which the pattern match has to occur. 模式匹配必须发生的窗口长度。*/
 	private Time windowTime;
 
-	/** A quantifier for the pattern. By default set to {@link Quantifier#one(ConsumingStrategy)}. */
+	/** A quantifier for the pattern. By default set to {@link Quantifier#one(ConsumingStrategy)}.模式的量词。默认情况下，设置为{@link Quantifier＃one（ConsumingStrategy）}。 */
 	private Quantifier quantifier = Quantifier.one(ConsumingStrategy.STRICT);
 
-	/** The condition an event has to satisfy to stop collecting events into looping state. */
+	/** The condition an event has to satisfy to stop collecting events into looping state. 事件必须满足的条件才能停止将事件收集到循环状态。*/
 	private IterativeCondition<F> untilCondition;
 
 	/**
 	 * Applicable to a {@code times} pattern, and holds
 	 * the number of times it has to appear.
+	 * 适用于{@code times}模式，并保留它必须出现的次数。
 	 */
 	private Times times;
 
+	//匹配后跳过策略
 	private final AfterMatchSkipStrategy afterMatchSkipStrategy;
 
 	protected Pattern(

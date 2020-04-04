@@ -50,16 +50,27 @@ import java.util.stream.Collectors;
  * @param <V> Type of the values
  * @see <a href="https://people.cs.umass.edu/~yanlei/publications/sase-sigmod08.pdf">
  * https://people.cs.umass.edu/~yanlei/publications/sase-sigmod08.pdf</a>
+ * 共享缓冲器执行其中根据状态下存储的值。 另外，该值可以被版本化，使得其可以检索其前身元件在缓冲器中。
+ * 实施这个想法是有一个与分配给他们的唯一ID传入事件的缓冲区。 这样，我们就不需要在加工过程中反序列化的事件，我们存储事件的只有一个副本。
+ * 在条目SharedBuffer是SharedBufferNode 。 共享缓冲器节点允许存储不同的条目之间的关系。 甲杜威版本方案允许（例如前面的元素）不同的关系之间进行区分。
+ * 实施强烈基于纸张“高效模式匹配在事件流”
+ *
  */
 public class SharedBuffer<V> {
 
+	//实体状态名称
 	private static final String entriesStateName = "sharedBuffer-entries";
+	//事件状态名称
 	private static final String eventsStateName = "sharedBuffer-events";
+	//事件计数器状态名称
 	private static final String eventsCountStateName = "sharedBuffer-events-count";
 
+	//事件缓冲
 	private MapState<EventId, Lockable<V>> eventsBuffer;
 	/** The number of events seen so far in the stream per timestamp. */
+	//到目前为止，每个时间戳在流中看到的事件数
 	private MapState<Long, Integer> eventsCount;
+	//锁定的SharedBufferNode
 	private MapState<NodeId, Lockable<SharedBufferNode>> entries;
 
 	/** The cache of eventsBuffer State. */

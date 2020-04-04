@@ -29,10 +29,13 @@ import java.util.Objects;
 
 /**
  * Unique identifier for {@link SharedBufferNode}.
+ * 唯一标示 节点ID
  */
 public class NodeId {
 
+	//页名称
 	private final String pageName;
+	//事件ID
 	private final EventId eventId;
 
 	public NodeId(EventId eventId, String pageName) {

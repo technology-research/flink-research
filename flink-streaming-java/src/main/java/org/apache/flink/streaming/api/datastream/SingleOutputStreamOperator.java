@@ -41,24 +41,28 @@ import static java.util.Objects.requireNonNull;
 import static org.apache.flink.util.Preconditions.checkArgument;
 
 /**
+ * SingleOutputStreamOperator代表用户定义的转换，它以一种预定义的输出类型应用于{@link DataStream}。
  * {@code SingleOutputStreamOperator} represents a user defined transformation
  * applied on a {@link DataStream} with one predefined output type.
  *
- * @param <T> The type of the elements in this stream.
+ * @param <T> The type of the elements in this stream. 这个流的元素的类型
  */
 @Public
 public class SingleOutputStreamOperator<T> extends DataStream<T> {
 
 	/** Indicate this is a non-parallel operator and cannot set a non-1 degree of parallelism. **/
+	//表明这是一个非并行运算符，无法设置非1的并行度
 	protected boolean nonParallel = false;
 
 	/**
+	 * 我们跟踪已请求的副输出及其类型。这样，我们可以捕捉到以下情况：对于另一种类型请求具有匹配ID的侧面输出，因为这会在运行时导致问题。
 	 * We keep track of the side outputs that were already requested and their types. With this,
 	 * we can catch the case when a side output with a matching id is requested for a different
 	 * type because this would lead to problems at runtime.
 	 */
 	private Map<OutputTag<?>, TypeInformation> requestedSideOutputs = new HashMap<>();
 
+	//被拆分应用
 	private boolean wasSplitApplied = false;
 
 	protected SingleOutputStreamOperator(StreamExecutionEnvironment environment, StreamTransformation<T> transformation) {
@@ -68,8 +72,8 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	/**
 	 * Gets the name of the current data stream. This name is
 	 * used by the visualization and logging during runtime.
-	 *
-	 * @return Name of the stream.
+	 * 得到当前数据流的名称
+	 * @return Name of the stream. 数据流的名称
 	 */
 	public String getName() {
 		return transformation.getName();
@@ -78,7 +82,7 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	/**
 	 * Sets the name of the current data stream. This name is
 	 * used by the visualization and logging during runtime.
-	 *
+	 * 设置当前数据流的名称，此名称在运行时由可视化和日志记录使用。
 	 * @return The named operator.
 	 */
 	public SingleOutputStreamOperator<T> name(String name){
@@ -87,10 +91,13 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	}
 
 	/**
+	 * 设置此运算符的ID。
 	 * Sets an ID for this operator.
 	 *
+	 * 这个指定的id被用于分配相同的算子ID通过job的提交
 	 * <p>The specified ID is used to assign the same operator ID across job
 	 * submissions (for example when starting a job from a savepoint).
+	 * 例如，从保存点开始作业时
 	 *
 	 * <p><strong>Important</strong>: this ID needs to be unique per
 	 * transformation and job. Otherwise, job submission will fail.

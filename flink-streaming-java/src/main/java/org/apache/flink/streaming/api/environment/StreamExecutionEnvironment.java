@@ -103,6 +103,7 @@ import java.util.List;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
+ * 流执行环境
  * The StreamExecutionEnvironment is the context in which a streaming program is executed. A
  * {@link LocalStreamEnvironment} will cause execution in the current JVM, a
  * {@link RemoteStreamEnvironment} will cause execution on a remote setup.
@@ -1970,9 +1971,11 @@ public abstract class StreamExecutionEnvironment {
 	 */
 	@Internal
 	public <F> F clean(F f) {
+		//如果executConfig中启用关闭清理
 		if (getConfig().isClosureCleanerEnabled()) {
 			ClosureCleaner.clean(f, true);
 		}
+		//确保其序列化
 		ClosureCleaner.ensureSerializable(f);
 		return f;
 	}

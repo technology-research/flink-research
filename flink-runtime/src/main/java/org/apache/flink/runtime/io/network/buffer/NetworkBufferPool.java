@@ -44,36 +44,48 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
+ * 如果task之间需要网络传输数据，可以将数据放到改缓冲池中
+ * NetworkBufferPool是一个固定大小MemorySegment实例的池对于网络栈
  * The NetworkBufferPool is a fixed size pool of {@link MemorySegment} instances
  * for the network stack.
  *
+ * NetworkBufferPool创建一些LocalBufferPool来自为了单个任务为网络数据传输绘制缓冲区
  * <p>The NetworkBufferPool creates {@link LocalBufferPool}s from which the individual tasks draw
  * the buffers for the network data transfer. When new local buffer pools are created, the
  * NetworkBufferPool dynamically redistributes the buffers between the pools.
+ * 当一个新的本地缓存池被创建，NetworkBufferPool动态的重新分配缓存在这些池里。
  */
 public class NetworkBufferPool implements BufferPoolFactory {
 
 	private static final Logger LOG = LoggerFactory.getLogger(NetworkBufferPool.class);
 
+	//内存块的总个数
 	private final int totalNumberOfMemorySegments;
 
+	//内存块大小
 	private final int memorySegmentSize;
 
+	//可用的内存块，放入阻塞队列中
 	private final ArrayBlockingQueue<MemorySegment> availableMemorySegments;
 
+	//是否销毁 内存可见的
 	private volatile boolean isDestroyed;
 
 	// ---- Managed buffer pools ----------------------------------------------
-
+	//锁
 	private final Object factoryLock = new Object();
 
+	//全部缓存池，LocalBufferPool会出现重复问题
 	private final Set<LocalBufferPool> allBufferPools = new HashSet<>();
 
+	//销毁的缓存池，有序链表，便于添加与移除
 	private final LinkedList<LocalBufferPool> bufferPoolsToDestroy = new LinkedList<>();
 
+	//必须缓存池总数量
 	private int numTotalRequiredBuffers;
 
 	/**
+	 * 申请全部MemorySegment实例管理这个池
 	 * Allocates all {@link MemorySegment} instances managed by this pool.
 	 */
 	public NetworkBufferPool(int numberOfSegmentsToAllocate, int segmentSize) {
@@ -84,6 +96,7 @@ public class NetworkBufferPool implements BufferPoolFactory {
 		final long sizeInLong = (long) segmentSize;
 
 		try {
+			//申请可用内存块阻塞队列
 			this.availableMemorySegments = new ArrayBlockingQueue<>(numberOfSegmentsToAllocate);
 		}
 		catch (OutOfMemoryError err) {
@@ -92,8 +105,11 @@ public class NetworkBufferPool implements BufferPoolFactory {
 		}
 
 		try {
+			//申请字节缓存
 			for (int i = 0; i < numberOfSegmentsToAllocate; i++) {
+				//nio的方式直接与内存交互申请字节缓存
 				ByteBuffer memory = ByteBuffer.allocateDirect(segmentSize);
+				//生成对应的内存块放到可用的阻塞队列中
 				availableMemorySegments.add(MemorySegmentFactory.wrapPooledOffHeapMemory(memory, null));
 			}
 		}

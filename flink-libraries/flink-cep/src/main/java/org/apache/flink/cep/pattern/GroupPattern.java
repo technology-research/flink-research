@@ -23,15 +23,23 @@ import org.apache.flink.cep.pattern.conditions.IterativeCondition;
 
 /**
  * Base class for a group pattern definition.
- *
- * @param <T> Base type of the elements appearing in the pattern
- * @param <F> Subtype of T to which the current pattern operator is constrained
+ * 定义一组模式的基础类
+ * @param <T> Base type of the elements appearing in the pattern  模式中出现的元素的基本类型
+ * @param <F> Subtype of T to which the current pattern operator is constrained 自类型
  */
 public class GroupPattern<T, F extends T> extends Pattern<T, F> {
 
 	/** Group pattern representing the pattern definition of this group. */
+	//组模式代表这个组的模式定义
 	private final Pattern<T, ? extends T> groupPattern;
 
+	/**
+	 *
+	 * @param previous 上一个模式
+	 * @param groupPattern 组模式
+	 * @param consumingStrategy 消费测试
+	 * @param afterMatchSkipStrategy 匹配之后跳过测试
+	 */
 	GroupPattern(
 		final Pattern<T, ? extends T> previous,
 		final Pattern<T, ? extends T> groupPattern,
@@ -56,6 +64,7 @@ public class GroupPattern<T, F extends T> extends Pattern<T, F> {
 		throw new UnsupportedOperationException("GroupPattern does not support subtype clause.");
 	}
 
+	//拿到组模式
 	public Pattern<T, ? extends T> getRawPattern() {
 		return groupPattern;
 	}

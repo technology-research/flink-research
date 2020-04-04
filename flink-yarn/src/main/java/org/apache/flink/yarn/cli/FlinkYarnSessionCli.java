@@ -90,19 +90,22 @@ import static org.apache.flink.client.cli.CliFrontendParser.YARN_DETACHED_OPTION
 import static org.apache.flink.configuration.HighAvailabilityOptions.HA_CLUSTER_ID;
 
 /**
+ * 处理与YARN session模式的命令行界面的类。
  * Class handling the command line interface to the YARN session.
  */
 public class FlinkYarnSessionCli extends AbstractCustomCommandLine<ApplicationId> {
 	private static final Logger LOG = LoggerFactory.getLogger(FlinkYarnSessionCli.class);
 
 	//------------------------------------ Constants   -------------------------
-
+    //日志配置文件名称
 	public static final String CONFIG_FILE_LOGBACK_NAME = "logback.xml";
 	public static final String CONFIG_FILE_LOG4J_NAME = "log4j.properties";
 
+	//客户端轮询间隔
 	private static final long CLIENT_POLLING_INTERVAL_MS = 3000L;
 
 	/** The id for the CommandLine interface. */
+	//这个id作用在CommandLine接口
 	private static final String ID = "yarn-cluster";
 
 	// YARN-session related constants

@@ -37,19 +37,21 @@ import java.util.Map;
  *
  * DataStream<OUT> result = pattern.flatSelect(new MyPatternFlatSelectFunction());
  * }</pre>
+ *
  * @param <IN>
  * @param <OUT>
  */
 public interface PatternFlatSelectFunction<IN, OUT> extends Function, Serializable {
 
 	/**
+	 * 生成0个或多个结果
 	 * Generates zero or more resulting elements given a map of detected pattern events. The events
 	 * are identified by their specified names.
 	 *
 	 * @param pattern Map containing the found pattern. Events are identified by their names.
-	 * @param out Collector used to output the generated elements
+	 * @param out     Collector used to output the generated elements
 	 * @throws Exception This method may throw exceptions. Throwing an exception will cause the
-	 * 					 operation to fail and may trigger recovery.
+	 *                   operation to fail and may trigger recovery.
 	 */
 	void flatSelect(Map<String, List<IN>> pattern, Collector<OUT> out) throws Exception;
 }

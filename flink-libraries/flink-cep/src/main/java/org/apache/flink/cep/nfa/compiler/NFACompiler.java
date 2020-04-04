@@ -49,32 +49,40 @@ import java.util.Stack;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
+ * 编译器类，其中包含将{@link Pattern}编译为{@link NFA}或 {@link NFAFactory}的方法。
  * Compiler class containing methods to compile a {@link Pattern} into a {@link NFA} or a
  * {@link NFAFactory}.
  */
 public class NFACompiler {
 
+	//技术状态名称
 	protected static final String ENDING_STATE_NAME = "$endState$";
 
 	/**
+	 * 编译给定模式程一个NFAFactory  这个NFA工程能够用于创建多个NFA
 	 * Compiles the given pattern into a {@link NFAFactory}. The NFA factory can be used to create
 	 * multiple NFAs.
 	 *
-	 * @param pattern Definition of sequence pattern
-	 * @param timeoutHandling True if the NFA shall return timed out event patterns
-	 * @param <T> Type of the input events
-	 * @return Factory for NFAs corresponding to the given pattern
+	 * @param pattern Definition of sequence pattern 序列模式的定义
+	 * @param timeoutHandling True if the NFA shall return timed out event patterns  如果NFA将返回超时事件模式，则为true
+	 * @param <T> Type of the input events 输入事件类型
+	 * @return Factory for NFAs corresponding to the given pattern 与给定模式对应的NFA的工厂
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> NFAFactory<T> compileFactory(
 		final Pattern<T, ?> pattern,
 		boolean timeoutHandling) {
+		//如果模式为null
 		if (pattern == null) {
+			//返回一个工厂用于空的NFA
 			// return a factory for empty NFAs
 			return new NFAFactoryImpl<>(0, Collections.<State<T>>emptyList(), timeoutHandling);
 		} else {
+			//传教NFA工厂编辑器
 			final NFAFactoryCompiler<T> nfaFactoryCompiler = new NFAFactoryCompiler<>(pattern);
+			//编译工厂
 			nfaFactoryCompiler.compileFactory();
+			//创建NFA工厂
 			return new NFAFactoryImpl<>(nfaFactoryCompiler.getWindowTime(), nfaFactoryCompiler.getStates(), timeoutHandling);
 		}
 	}
@@ -118,6 +126,7 @@ public class NFACompiler {
 	}
 
 	/**
+	 * 将{@link Pattern}转换为{@link State}的图形。它允许跨方法共享编译状态
 	 * Converts a {@link Pattern} into graph of {@link State}. It enables sharing of
 	 * compilation state across methods.
 	 *
@@ -125,39 +134,56 @@ public class NFACompiler {
 	 */
 	static class NFAFactoryCompiler<T> {
 
+		//NFA状态名称处理器
 		private final NFAStateNameHandler stateNameHandler = new NFAStateNameHandler();
+		//停止状态集合
 		private final Map<String, State<T>> stopStates = new HashMap<>();
+		//状态集合
 		private final List<State<T>> states = new ArrayList<>();
 
+		//窗口事件
 		private long windowTime = 0;
+		//当前组模式
 		private GroupPattern<T, ?> currentGroupPattern;
+		//是否为循环的第一个
 		private Map<GroupPattern<T, ?>, Boolean> firstOfLoopMap = new HashMap<>();
+		//当前模式
 		private Pattern<T, ?> currentPattern;
+		//跟随模式
 		private Pattern<T, ?> followingPattern;
+		//匹配之后跳过策略
 		private final AfterMatchSkipStrategy afterMatchSkipStrategy;
+		//原始的状态集合
 		private Map<String, State<T>> originalStateMap = new HashMap<>();
 
 		NFAFactoryCompiler(final Pattern<T, ?> pattern) {
+			//设置当前模式
 			this.currentPattern = pattern;
+			//设置匹配之后跳过策略
 			afterMatchSkipStrategy = pattern.getAfterMatchSkipStrategy();
 		}
 
 		/**
+		 * 将给定的模式编译为{@link NFAFactory}。
 		 * Compiles the given pattern into a {@link NFAFactory}. The NFA factory can be used to create
 		 * multiple NFAs.
 		 */
 		void compileFactory() {
+			//得到当前模式的量词消费策略，如果为NotFollowedBy报错，他不支持作为最后一个，因为它什么都不匹配
 			if (currentPattern.getQuantifier().getConsumingStrategy() == Quantifier.ConsumingStrategy.NOT_FOLLOW) {
 				throw new MalformedPatternException("NotFollowedBy is not supported as a last part of a Pattern!");
 			}
 
+			//校验模式名字的唯一
 			checkPatternNameUniqueness();
 
+			//校验模式匹配后跳过策略
 			checkPatternSkipStrategy();
 
 			// we're traversing the pattern from the end to the beginning --> the first state is the final state
+			//创建结束状态
 			State<T> sinkState = createEndingState();
-			// add all the normal states
+			// add all the normal states 添加所有正常状态
 			sinkState = createMiddleStates(sinkState);
 			// add the beginning state
 			createStartState(sinkState);
@@ -179,14 +205,17 @@ public class NFACompiler {
 		 * Check pattern after match skip strategy.
 		 */
 		private void checkPatternSkipStrategy() {
+			//不为空
 			if (afterMatchSkipStrategy.getPatternName().isPresent()) {
+				//得到模式名称
 				String patternName = afterMatchSkipStrategy.getPatternName().get();
 				Pattern<T, ?> pattern = currentPattern;
+				//递归判断直到走完所有模式序或者名称相同
 				while (pattern.getPrevious() != null && !pattern.getName().equals(patternName)) {
 					pattern = pattern.getPrevious();
 				}
 
-				// pattern name match check.
+				// pattern name match check. 第一个模式
 				if (!pattern.getName().equals(patternName)) {
 					throw new MalformedPatternException("The pattern name specified in AfterMatchSkipStrategy " +
 						"can not be found in the given Pattern");
@@ -200,29 +229,38 @@ public class NFACompiler {
 		 */
 		private void checkPatternNameUniqueness() {
 			// make sure there is no pattern with name "$endState$"
+			//校验确保是否为结束状态
 			stateNameHandler.checkNameUniqueness(ENDING_STATE_NAME);
+			//得到校验的模式
 			Pattern patternToCheck = currentPattern;
+			//递归校验所有模式名称
 			while (patternToCheck != null) {
 				checkPatternNameUniqueness(patternToCheck);
 				patternToCheck = patternToCheck.getPrevious();
 			}
+			//状态名称处理器
 			stateNameHandler.clear();
 		}
 
 		/**
+		 * 校验给定的模式名称是否存在
 		 * Check if the given pattern's name is already used or not. If yes, it
 		 * throws a {@link MalformedPatternException}.
 		 *
 		 * @param pattern The pattern to be checked
 		 */
 		private void checkPatternNameUniqueness(final Pattern pattern) {
+			//如果为组模式
 			if (pattern instanceof GroupPattern) {
+				//得到组中个模式
 				Pattern patternToCheck = ((GroupPattern) pattern).getRawPattern();
+				//然后递归校验
 				while (patternToCheck != null) {
 					checkPatternNameUniqueness(patternToCheck);
 					patternToCheck = patternToCheck.getPrevious();
 				}
 			} else {
+				//校验名称的唯一性
 				stateNameHandler.checkNameUniqueness(pattern.getName());
 			}
 		}
@@ -260,39 +298,52 @@ public class NFACompiler {
 		}
 
 		/**
+		 * 创建虚拟最终状态在NFA图
 		 * Creates the dummy Final {@link State} of the NFA graph.
-		 * @return dummy Final state
+		 * @return dummy Final state虚拟最终状态
 		 */
 		private State<T> createEndingState() {
 			State<T> endState = createState(ENDING_STATE_NAME, State.StateType.Final);
+			//如果当前模式事件状态不为null设置窗口事件
 			windowTime = currentPattern.getWindowTime() != null ? currentPattern.getWindowTime().toMilliseconds() : 0L;
+			//返回终止状态
 			return endState;
 		}
 
 		/**
 		 * Creates all the states between Start and Final state.
-		 *
-		 * @param sinkState the state that last state should point to (always the Final state)
-		 * @return the next state after Start in the resulting graph
+		 * 创建开始状态和最终状态之间的所有状态。
+		 * @param sinkState the state that last state should point to (always the Final state) 最后状态应指向的状态（总是最终状态）
+		 * @return the next state after Start in the resulting graph  结果图中“开始”后的下一个状态
 		 */
 		private State<T> createMiddleStates(final State<T> sinkState) {
+			//最后的状态
 			State<T> lastSink = sinkState;
+			//遍历序列模式
 			while (currentPattern.getPrevious() != null) {
-
+				//如果当前模式不为notFollowedBy
 				if (currentPattern.getQuantifier().getConsumingStrategy() == Quantifier.ConsumingStrategy.NOT_FOLLOW) {
 					//skip notFollow patterns, they are converted into edge conditions
+					//如果当前模式为notNext
 				} else if (currentPattern.getQuantifier().getConsumingStrategy() == Quantifier.ConsumingStrategy.NOT_NEXT) {
+					//创建正常状态 notNext
 					final State<T> notNext = createState(currentPattern.getName(), State.StateType.Normal);
+					//得到take条件，take表示不传递状态到下一个模式中
 					final IterativeCondition<T> notCondition = getTakeCondition(currentPattern);
+					//得到停止状态
 					final State<T> stopState = createStopState(notCondition, currentPattern.getName());
-
+					//如果为最终状态
 					if (lastSink.isFinal()) {
 						//so that the proceed to final is not fired
+						//忽略当前事件
 						notNext.addIgnore(lastSink, new RichNotCondition<>(notCondition));
 					} else {
+						//执行当前事件并且传递状态
 						notNext.addProceed(lastSink, new RichNotCondition<>(notCondition));
 					}
+					//执行停止状态
 					notNext.addProceed(stopState, notCondition);
+					//设置状态
 					lastSink = notNext;
 				} else {
 					lastSink = convertPattern(lastSink);
@@ -350,21 +401,33 @@ public class NFACompiler {
 		/**
 		 * Creates a state with {@link State.StateType#Normal} and adds it to the collection of created states.
 		 * Should be used instead of instantiating with new operator.
-		 *
+		 * 创建具有{@link State.StateType#Normal} 并将其添加到创建状态的集合。 应使用而不是用新的操作实例。
 		 * @return the created state
 		 */
 		private State<T> createState(String name, State.StateType stateType) {
+			//得到状态名称
 			String stateName = stateNameHandler.getUniqueInternalName(name);
+			//创建状态
 			State<T> state = new State<>(stateName, stateType);
+			//添加状态集合中
 			states.add(state);
 			return state;
 		}
 
+		/**
+		 * 创建停止状态
+		 * @param notCondition 不是条件
+		 * @param name 当前模式名称
+		 * @return
+		 */
 		private State<T> createStopState(final IterativeCondition<T> notCondition, final String name) {
 			// We should not duplicate the notStates. All states from which we can stop should point to the same one.
+			//我们不应该复制notStates。我们可以停止的所有状态都应指向同一状态。
 			State<T> stopState = stopStates.get(name);
 			if (stopState == null) {
+				//如果为nulll创建
 				stopState = createState(name, State.StateType.Stop);
+				//添加take边
 				stopState.addTake(notCondition);
 				stopStates.put(name, stopState);
 			}
@@ -763,7 +826,7 @@ public class NFACompiler {
 		/**
 		 * This method extends the given condition with stop(until) condition if necessary.
 		 * The until condition needs to be applied only if both of the given conditions are not null.
-		 *
+		 * 此方法扩展了停止（直至）条件，如果必要的给定条件。 只有当两者的给定条件不是空的，直到病情需要应用
 		 * @param condition the condition to extend
 		 * @param untilCondition the until condition to join with the given condition
 		 * @param isTakeCondition whether the {@code condition} is for {@code TAKE} edge
@@ -863,16 +926,21 @@ public class NFACompiler {
 		 * @return the {@link IterativeCondition condition} for the {@code TAKE} edge
 		 * that corresponds to the specified {@link Pattern} and extended with
 		 * stop(until) condition if necessary.
+		 * 该condition为TAKE边缘对应于所述指定的Pattern ，并且如果必要的扩展与止动件（直至）状态
 		 */
 		@SuppressWarnings("unchecked")
 		private IterativeCondition<T> getTakeCondition(Pattern<T, ?> pattern) {
+			//转换为迭代条件
 			IterativeCondition<T> takeCondition = (IterativeCondition<T>) pattern.getCondition();
+			//如果当前组模式不为null并且停止条件不为null
 			if (currentGroupPattern != null && currentGroupPattern.getUntilCondition() != null) {
+				//得到task边条件
 				takeCondition = extendWithUntilCondition(
 					takeCondition,
 					(IterativeCondition<T>) currentGroupPattern.getUntilCondition(),
 					true);
 			}
+			//得到take条件
 			return takeCondition;
 		}
 

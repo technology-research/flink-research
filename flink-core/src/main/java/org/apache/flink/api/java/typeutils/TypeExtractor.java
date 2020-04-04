@@ -523,6 +523,7 @@ public class TypeExtractor {
 
 	/**
 	 * Returns the unary operator's return type.
+	 *返回一元运算符的返回类型。
 	 *
 	 * <p><b>NOTE:</b> lambda type indices allow extraction of Type from lambdas. To extract input type <b>IN</b>
 	 * from the function given below one should pass {@code new int[] {0,1,0}} as lambdaInputTypeArgumentIndices.

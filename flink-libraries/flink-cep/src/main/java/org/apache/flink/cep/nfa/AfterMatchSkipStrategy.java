@@ -36,6 +36,7 @@ import java.util.Optional;
 
 /**
  * Indicate the skip strategy after a match process.
+ * 表示匹配过程后的跳过策略。
  */
 public abstract class AfterMatchSkipStrategy implements Serializable {
 
@@ -43,7 +44,7 @@ public abstract class AfterMatchSkipStrategy implements Serializable {
 
 	/**
 	 * Discards every partial match that started before the first event of emitted match mapped to *PatternName*.
-	 *
+	 * 丢弃在映射到* PatternName *的发出的匹配的第一个事件之前开始的每个部分匹配。
 	 * @param patternName the pattern name to skip to
 	 * @return the created AfterMatchSkipStrategy
 	 */
@@ -53,7 +54,7 @@ public abstract class AfterMatchSkipStrategy implements Serializable {
 
 	/**
 	 * Discards every partial match that started before the last event of emitted match mapped to *PatternName*.
-	 *
+	 * 丢弃在映射到* PatternName *的发射匹配的最后一个事件之前开始的每个部分匹配。
 	 * @param patternName the pattern name to skip to
 	 * @return the created AfterMatchSkipStrategy
 	 */
@@ -63,7 +64,7 @@ public abstract class AfterMatchSkipStrategy implements Serializable {
 
 	/**
 	 * Discards every partial match that started before emitted match ended.
-	 *
+	 * 丢弃在发出的匹配结束之前开始的所有部分匹配。
 	 * @return the created AfterMatchSkipStrategy
 	 */
 	public static SkipPastLastStrategy skipPastLastEvent() {
@@ -72,7 +73,7 @@ public abstract class AfterMatchSkipStrategy implements Serializable {
 
 	/**
 	 * Discards every partial match that started with the same event, emitted match was started.
-	 *
+	 * 丢弃以同一事件开始的所有部分匹配，发出的匹配已开始。
 	 * @return the created AfterMatchSkipStrategy
 	 */
 	public static AfterMatchSkipStrategy skipToNext() {
@@ -97,7 +98,7 @@ public abstract class AfterMatchSkipStrategy implements Serializable {
 
 	/**
 	 * Prunes matches/partial matches based on the chosen strategy.
-	 *
+	 *根据所选策略修剪或部分匹配。
 	 * @param matchesToPrune current partial matches
 	 * @param matchedResult  already completed matches
 	 * @param sharedBufferAccessor   accessor to corresponding shared buffer

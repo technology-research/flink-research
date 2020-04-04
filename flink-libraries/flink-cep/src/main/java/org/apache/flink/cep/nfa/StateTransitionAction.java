@@ -19,10 +19,15 @@
 package org.apache.flink.cep.nfa;
 
 /**
+ * 状态转换活动
+ * 从{@link State}到另一个状态转换时的一组动作。
  * Set of actions when doing a state transition from a {@link State} to another.
  */
 public enum StateTransitionAction {
+	//接受当前事件并将其分配给当前状态
 	TAKE, // take the current event and assign it to the current state
+	//忽略当前事件
 	IGNORE, // ignore the current event
+	//执行状态转换并保留当前事件以进行进一步处理（ε转换）
 	PROCEED // do the state transition and keep the current event for further processing (epsilon transition)
 }

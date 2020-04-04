@@ -40,18 +40,20 @@ import org.apache.flink.util.OutputTag;
 
 /**
  * Utility methods for creating {@link PatternStream}.
+ * 用于创建{@link PatternStream}的实用方法。
  */
 public class CEPOperatorUtils {
 
 	/**
+	 * 创建一个数据流包含PatternSelectFunction的结果去完全匹配事件模式
 	 * Creates a data stream containing results of {@link PatternSelectFunction} to fully matching event patterns.
 	 *
-	 * @param inputStream stream of input events
-	 * @param pattern pattern to be search for in the stream
-	 * @param selectFunction function to be applied to matching event sequences
-	 * @param outTypeInfo output TypeInformation of selectFunction
-	 * @param <IN> type of input events
-	 * @param <OUT> type of output events
+	 * @param inputStream stream of input events 输入事件的流
+	 * @param pattern pattern to be search for in the stream 流中要搜索的模式
+	 * @param selectFunction function to be applied to matching event sequences 函数被适用于匹配事件的序列
+	 * @param outTypeInfo output TypeInformation of selectFunction selectFunction输出的类型信息
+	 * @param <IN> type of input events 输入事件的类型
+	 * @param <OUT> type of output events 输出事件的类型
 	 * @return Data stream containing fully matched event sequence with applied {@link PatternSelectFunction}
 	 */
 	public static <IN, OUT> SingleOutputStreamOperator<OUT> createPatternStream(
@@ -200,6 +202,23 @@ public class CEPOperatorUtils {
 	}
 
 	/**
+	 *
+	 * 创建包含的结果的数据流PatternSelectFunction完全匹配事件模式，并且还超时随施加部分匹配PatternTimeoutFunction作为sideoutput。
+	 *
+	 * PARAMS：
+	 * inputStream - 输入事件的流
+	 * pattern - 模式是搜索流中
+	 * selectFunction - 功能将被施加到匹配的事件序列
+	 * outTypeInfo - selectFunction的输出TypeInformation
+	 * outputTag - OutputTag用于与超时匹配的侧输出
+	 * timeoutFunction - 功能将被施加到超时事件序列
+	 * 类型参数：
+	 * <IN> - 输入事件的类型
+	 * <OUT1> - 完全匹配的事件的类型
+	 * <OUT2> - 型超时事件的
+	 * 返回：
+	 * 含有外加充分匹配的事件序列数据流PatternSelectFunction包含已超时模式随施加PatternTimeoutFunction作为 side-output
+	 *
 	 * Creates a data stream containing results of {@link PatternSelectFunction} to fully matching event patterns and
 	 * also timed out partially matched with applied {@link PatternTimeoutFunction} as a sideoutput.
 	 *

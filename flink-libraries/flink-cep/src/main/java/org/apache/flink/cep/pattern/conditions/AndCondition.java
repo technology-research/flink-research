@@ -22,6 +22,10 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.util.Preconditions;
 
 /**
+ *
+ * 一个IterativeCondition条件condition ，其结合了一个逻辑两个条件AND并返回true ，如果两者都是true 。
+ * 已过时
+ *
  * A {@link IterativeCondition condition} which combines two conditions with a logical
  * {@code AND} and returns {@code true} if both are {@code true}.
  *

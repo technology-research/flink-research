@@ -58,7 +58,7 @@ import static org.apache.flink.cep.nfa.MigrationUtils.deserializeComputationStat
 
 /**
  * Non-deterministic finite automaton implementation.
- *
+ * 非确定性有限自动机实现。
  * <p>The {@link AbstractKeyedCEPPatternOperator CEP operator}
  * keeps one NFA per key, for keyed input streams, and a single global NFA for non-keyed ones.
  * When an event gets processed, it updates the NFA's internal state machine.
@@ -82,6 +82,7 @@ import static org.apache.flink.cep.nfa.MigrationUtils.deserializeComputationStat
 public class NFA<T> {
 
 	/**
+	 *  NFACompiler返回的所有有效的NFA状态集合
 	 * A set of all the valid NFA states, as returned by the
 	 * {@link NFACompiler NFACompiler}.
 	 * These are directly derived from the user-specified pattern.
@@ -89,6 +90,7 @@ public class NFA<T> {
 	private final Map<String, State<T>> states;
 
 	/**
+	 * attern.within(Time)指定的时间窗口长度
 	 * The length of a windowed pattern, as specified using the
 	 * {@link org.apache.flink.cep.pattern.Pattern#within(Time)}  Pattern.within(Time)}
 	 * method.
@@ -96,6 +98,7 @@ public class NFA<T> {
 	private final long windowTime;
 
 	/**
+	 *  一个超时匹配的标记
 	 * A flag indicating if we want timed-out patterns (in case of windowed patterns)
 	 * to be emitted ({@code true}), or silently discarded ({@code false}).
 	 */
@@ -168,10 +171,12 @@ public class NFA<T> {
 	}
 
 	/**
+	 * 处理下一输入事件。 如果一些计算的达到最终状态然后将所得的事件序列被返回。 如果计算超时，超时处理被激活，则超时被退回的事件模式。
+	 *
 	 * Processes the next input event. If some of the computations reach a final state then the
 	 * resulting event sequences are returned. If computations time out and timeout handling is
 	 * activated, then the timed out event patterns are returned.
-	 *
+	 * 如果计算达到停止状态，前进的道路被丢弃，目前构建的路径与导致处于停止状态返回的元素
 	 * <p>If computations reach a stop state, the path forward is discarded and currently constructed path is returned
 	 * with the element that resulted in the stop state.
 	 *

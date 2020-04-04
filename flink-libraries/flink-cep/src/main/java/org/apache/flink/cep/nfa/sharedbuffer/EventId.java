@@ -31,9 +31,12 @@ import java.util.Objects;
 
 /**
  * Composite key for events in {@link SharedBuffer}.
+ *SharedBuffer中事件的组合键。
  */
 public class EventId implements Comparable<EventId> {
+	//id
 	private final int id;
+	//事件戳
 	private final long timestamp;
 
 	public EventId(int id, long timestamp) {

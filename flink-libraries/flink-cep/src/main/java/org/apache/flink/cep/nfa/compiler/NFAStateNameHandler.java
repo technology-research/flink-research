@@ -30,8 +30,10 @@ import java.util.Set;
  */
 public class NFAStateNameHandler {
 
+	//状态名称分隔符
 	private static final String STATE_NAME_DELIM = ":";
 
+	//模式名称集合
 	private final Set<String> usedNames = new HashSet<>();
 
 	/**
@@ -55,6 +57,7 @@ public class NFAStateNameHandler {
 		if (usedNames.contains(name)) {
 			throw new MalformedPatternException("Duplicate pattern name: " + name + ". Names must be unique.");
 		}
+		//不存在则添加
 		usedNames.add(name);
 	}
 

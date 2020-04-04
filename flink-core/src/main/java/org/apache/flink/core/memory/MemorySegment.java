@@ -30,9 +30,11 @@ import java.nio.ReadOnlyBufferException;
 import static org.apache.flink.util.Preconditions.checkArgument;
 
 /**
+ *
+ * 代表flink中最小的内存单元，相当于java中的byte数组
  * This class represents a piece of memory managed by Flink.
  * The segment may be backed by heap memory (byte array) or by off-heap memory.
- *
+ *	这个类代表一块管理的内存块在flink中，该段可以由堆内存（字节数组）或堆外内存支持。
  * <p>The methods for individual memory access are specialized in the classes
  * {@link org.apache.flink.core.memory.HeapMemorySegment} and
  * {@link org.apache.flink.core.memory.HybridMemorySegment}.

@@ -30,13 +30,16 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
+ * 使用锁定引用计数器为传入事件和 {@link SharedBufferNode}实现锁定逻辑。
  * Implements locking logic for incoming event and
  * {@link SharedBufferNode} using a lock reference counter.
  */
 public final class Lockable<T> {
 
+	//引用计数器
 	private int refCounter;
 
+	//元素
 	private final T element;
 
 	public Lockable(T element, int refCounter) {
@@ -44,21 +47,24 @@ public final class Lockable<T> {
 		this.element = element;
 	}
 
+	//加锁引用计数器+1
 	public void lock() {
 		refCounter += 1;
 	}
 
 	/**
 	 * Releases lock on this object. If no more locks are acquired on it, this method will return true.
-	 *
+	 * 在这个对象释放锁，如果没有其他锁，此方法将返回true。
 	 * @return true if no more locks are acquired
 	 */
 	boolean release() {
+		//如果这个对象没有其他锁
 		if (refCounter <= 0) {
 			return true;
 		}
-
+		//锁减1
 		refCounter -= 1;
+		//是否还有锁
 		return refCounter == 0;
 	}
 

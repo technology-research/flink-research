@@ -34,38 +34,56 @@ import org.apache.flink.util.OutputTag;
 import java.util.UUID;
 
 /**
+ * 用于CEP模式检测的流抽象。 模式流是一种流，它发出检测到的模式序列作为与其名称相关联的事件的映射。使用org.apache.flink.cep.nfa.NFA来检测这种模式
  * Stream abstraction for CEP pattern detection. A pattern stream is a stream which emits detected
  * pattern sequences as a map of events associated with their names. The pattern is detected using a
- * {@link org.apache.flink.cep.nfa.NFA}. In order to process the detected sequences, the user
+ * {@link org.apache.flink.cep.nfa.NFA}.
+ * 为了处理检测到的序列，用户必须指定一个PatternSelectFunction或者一个PatternFlatSelectFunction
+ * In order to process the detected sequences, the user
  * has to specify a {@link PatternSelectFunction} or a {@link PatternFlatSelectFunction}.
  *
+ *
+ * 另外，它允许处理已超时的部分匹配的事件模式。用户必须指定一个PatternTimeoutFunction或者一个PatternFlatTimeoutFunction
  * <p>Additionally it allows to handle partially matched event patterns which have timed out. For this
  * the user has to specify a {@link PatternTimeoutFunction} or a {@link PatternFlatTimeoutFunction}.
  *
- * @param <T> Type of the events
+ * @param <T> Type of the events 事件的类型
  */
 public class PatternStream<T> {
 
-	// underlying data stream
+	// underlying data stream 基础输入数据流
 	private final DataStream<T> inputStream;
 
+	//匹配模式
 	private final Pattern<T, ?> pattern;
 
-	// comparator to sort events
+	// comparator to sort events 排序事件的比较器
 	private final EventComparator<T> comparator;
 
 	/**
+	 * 侧面输出{@code OutputTag}用于后期数据。如果未设置标签，则后期数据将被简单地删除。
 	 * Side output {@code OutputTag} for late data. If no tag is set late data will be simply
 	 * dropped.
 	 */
 	private OutputTag<T> lateDataOutputTag;
 
+	/**
+	 * 输入事件的数据流，定义的序列模式
+	 * @param inputStream
+	 * @param pattern
+	 */
 	PatternStream(final DataStream<T> inputStream, final Pattern<T, ?> pattern) {
 		this.inputStream = inputStream;
 		this.pattern = pattern;
 		this.comparator = null;
 	}
 
+	/**
+	 *
+	 * @param inputStream
+	 * @param pattern
+	 * @param comparator 事件比较器
+	 */
 	PatternStream(final DataStream<T> inputStream, final Pattern<T, ?> pattern, final EventComparator<T> comparator) {
 		this.inputStream = inputStream;
 		this.pattern = pattern;
@@ -85,20 +103,22 @@ public class PatternStream<T> {
 	}
 
 	/**
+	 * 适用于于一个select函数去检测模式的序列。对于每个模式序列将提供一个PatternSelectFunction被调用。这个模式select函数能够产生一个结果函数
 	 * Applies a select function to the detected pattern sequence. For each pattern sequence the
 	 * provided {@link PatternSelectFunction} is called. The pattern select function can produce
 	 * exactly one resulting element.
 	 *
 	 * @param patternSelectFunction The pattern select function which is called for each detected
-	 *                              pattern sequence.
-	 * @param <R> Type of the resulting elements
-	 * @return {@link DataStream} which contains the resulting elements from the pattern select
+	 *                              pattern sequence. 这个模式select函数将被调用在每次检测模式序列时
+	 * @param <R> Type of the resulting elements 结果事件的类型
+	 * @return {@link DataStream} which contains the resulting elements from the pattern select DataStream包含这个结果元素来时模式select
 	 *         function.
 	 */
 	public <R> SingleOutputStreamOperator<R> select(final PatternSelectFunction<T, R> patternSelectFunction) {
 		// we have to extract the output type from the provided pattern selection function manually
 		// because the TypeExtractor cannot do that if the method is wrapped in a MapFunction
 
+		//提取返回值类型，根据patternSelectFunction函数
 		TypeInformation<R> returnType = TypeExtractor.getUnaryOperatorReturnType(
 			patternSelectFunction,
 			PatternSelectFunction.class,
@@ -110,10 +130,13 @@ public class PatternStream<T> {
 			null,
 			false);
 
+		//执行select函数
 		return select(patternSelectFunction, returnType);
 	}
 
 	/**
+	 * 如果在{@link ExecutionConfig}中启用了关闭清理功能，
+	 * 则在给定的函数上调用{@link org.apache.flink.api.java.ClosureCleaner}
 	 * Invokes the {@link org.apache.flink.api.java.ClosureCleaner}
 	 * on the given function if closure cleaning is enabled in the {@link ExecutionConfig}.
 	 *
@@ -136,6 +159,7 @@ public class PatternStream<T> {
 	 *         function.
 	 */
 	public <R> SingleOutputStreamOperator<R> select(final PatternSelectFunction<T, R> patternSelectFunction, TypeInformation<R> outTypeInfo) {
+		//创建一个模式流，并且清理patternSelectFunction
 		return CEPOperatorUtils.createPatternStream(inputStream, pattern, comparator, clean(patternSelectFunction), outTypeInfo, lateDataOutputTag);
 	}
 

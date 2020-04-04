@@ -33,7 +33,6 @@ import org.apache.flink.runtime.state.FunctionInitializationContext;
 import org.apache.flink.runtime.state.FunctionSnapshotContext;
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
 import org.apache.flink.util.Preconditions;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,18 +46,19 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
+ * 这是单机非并行的任务监控中心，当任务是一个FileInputFormat和依赖于FileProcessingMode和FilePathFilter时，它负责：
  * This is the single (non-parallel) monitoring task which takes a {@link FileInputFormat}
  * and, depending on the {@link FileProcessingMode} and the {@link FilePathFilter}, it is responsible for:
  *
  * <ol>
- *     <li>Monitoring a user-provided path.</li>
- *     <li>Deciding which files should be further read and processed.</li>
- *     <li>Creating the {@link FileInputSplit splits} corresponding to those files.</li>
- *     <li>Assigning them to downstream tasks for further processing.</li>
+ * <li>Monitoring a user-provided path.</li> 监控一个用户提供路径
+ * <li>Deciding which files should be further read and processed.</li> 确定应进一步读取和处理哪些文件
+ * <li>Creating the {@link FileInputSplit splits} corresponding to those files.</li> 创建FileInputSplit去构造这些文件
+ * <li>Assigning them to downstream tasks for further processing.</li>将它们分配给下游任务以进行进一步处理
  * </ol>
  *
- * <p>The splits to be read are forwarded to the downstream {@link ContinuousFileReaderOperator}
- * which can have parallelism greater than one.
+ * <p>The splits to be read are forwarded to the downstream {@link ContinuousFileReaderOperator}这个分割流被用于读取转换给下游的ContinuousFileReaderOperator并行度可以大于1。
+ * </p></p> which can have parallelism greater than one.
  *
  * <p><b>IMPORTANT NOTE: </b> Splits are forwarded downstream for reading in ascending modification time order,
  * based on the modification time of the files they belong to.
@@ -73,27 +73,45 @@ public class ContinuousFileMonitoringFunction<OUT>
 
 	/**
 	 * The minimum interval allowed between consecutive path scans.
-	 *
+	 * 最小间隔运行连续路径扫描
 	 * <p><b>NOTE:</b> Only applicable to the {@code PROCESS_CONTINUOUSLY} mode.
 	 */
 	public static final long MIN_MONITORING_INTERVAL = 1L;
 
-	/** The path to monitor. */
+	/**
+	 * The path to monitor.
+	 * 监控路径
+	 */
 	private final String path;
 
-	/** The parallelism of the downstream readers. */
+	/**
+	 * The parallelism of the downstream readers.
+	 * 下游任务读取这的并发个数
+	 */
 	private final int readerParallelism;
 
-	/** The {@link FileInputFormat} to be read. */
+	/**
+	 * The {@link FileInputFormat} to be read.
+	 * 文件读取格式
+	 */
 	private final FileInputFormat<OUT> format;
 
-	/** The interval between consecutive path scans. */
+	/**
+	 * The interval between consecutive path scans.
+	 * 连续路径扫描的间隔
+	 */
 	private final long interval;
 
-	/** Which new data to process (see {@link FileProcessingMode}. */
+	/**
+	 * Which new data to process (see {@link FileProcessingMode}.
+	 * 数据执行的模式，执行一次或者连续执行
+	 */
 	private final FileProcessingMode watchType;
 
-	/** The maximum file modification time seen so far. */
+	/**
+	 * The maximum file modification time seen so far.
+	 * 最大文件修改时间
+	 */
 	private volatile long globalModificationTime = Long.MIN_VALUE;
 
 	private transient Object checkpointLock;
@@ -241,9 +259,9 @@ public class ContinuousFileMonitoringFunction<OUT>
 		Map<Path, FileStatus> eligibleFiles = listEligibleFiles(fs, new Path(path));
 		Map<Long, List<TimestampedFileInputSplit>> splitsSortedByModTime = getInputSplitsSortedByModTime(eligibleFiles);
 
-		for (Map.Entry<Long, List<TimestampedFileInputSplit>> splits: splitsSortedByModTime.entrySet()) {
+		for (Map.Entry<Long, List<TimestampedFileInputSplit>> splits : splitsSortedByModTime.entrySet()) {
 			long modificationTime = splits.getKey();
-			for (TimestampedFileInputSplit split: splits.getValue()) {
+			for (TimestampedFileInputSplit split : splits.getValue()) {
 				LOG.info("Forwarding split: " + split);
 				context.collect(split);
 			}
@@ -257,17 +275,18 @@ public class ContinuousFileMonitoringFunction<OUT>
 	 * {@link ContinuousFileReaderOperator}. Splits are sorted <b>by modification time</b> before
 	 * being forwarded and only splits belonging to files in the {@code eligibleFiles}
 	 * list will be processed.
+	 *
 	 * @param eligibleFiles The files to process.
 	 */
 	private Map<Long, List<TimestampedFileInputSplit>> getInputSplitsSortedByModTime(
-				Map<Path, FileStatus> eligibleFiles) throws IOException {
+		Map<Path, FileStatus> eligibleFiles) throws IOException {
 
 		Map<Long, List<TimestampedFileInputSplit>> splitsByModTime = new TreeMap<>();
 		if (eligibleFiles.isEmpty()) {
 			return splitsByModTime;
 		}
 
-		for (FileInputSplit split: format.createInputSplits(readerParallelism)) {
+		for (FileInputSplit split : format.createInputSplits(readerParallelism)) {
 			FileStatus fileStatus = eligibleFiles.get(split.getPath());
 			if (fileStatus != null) {
 				Long modTime = fileStatus.getModificationTime();
@@ -286,6 +305,7 @@ public class ContinuousFileMonitoringFunction<OUT>
 
 	/**
 	 * Returns the paths of the files not yet processed.
+	 *
 	 * @param fileSystem The filesystem where the monitored directory resides.
 	 */
 	private Map<Path, FileStatus> listEligibleFiles(FileSystem fileSystem, Path path) throws IOException {
@@ -312,7 +332,7 @@ public class ContinuousFileMonitoringFunction<OUT>
 					if (!shouldIgnore(filePath, modificationTime)) {
 						files.put(filePath, status);
 					}
-				} else if (format.getNestedFileEnumeration() && format.acceptFile(status)){
+				} else if (format.getNestedFileEnumeration() && format.acceptFile(status)) {
 					files.putAll(listEligibleFiles(fileSystem, status.getPath()));
 				}
 			}
@@ -324,7 +344,8 @@ public class ContinuousFileMonitoringFunction<OUT>
 	 * Returns {@code true} if the file is NOT to be processed further.
 	 * This happens if the modification time of the file is smaller than
 	 * the {@link #globalModificationTime}.
-	 * @param filePath the path of the file to check.
+	 *
+	 * @param filePath         the path of the file to check.
 	 * @param modificationTime the modification time of the file.
 	 */
 	private boolean shouldIgnore(Path filePath, long modificationTime) {
