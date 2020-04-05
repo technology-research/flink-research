@@ -30,6 +30,9 @@ import java.lang.annotation.Target;
  * <p>This annotation is typically attached when for example a method should be {@code private}
  * (because it is not intended to be called externally), but cannot be declared private, because
  * some tests need to have access to it.
+ *
+ * 这注解声明的函数，域，构造或全部类型，仅用于测试目的可见。
+ * 这个注解通常连接时，例如一个方法应该是private的（因为它不打算外部调用），但不能被声明为private，因为有些测试需要访问它。
  */
 @Documented
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.CONSTRUCTOR })

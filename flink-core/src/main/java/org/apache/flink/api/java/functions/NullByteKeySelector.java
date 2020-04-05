@@ -21,8 +21,11 @@ package org.apache.flink.api.java.functions;
 import org.apache.flink.annotation.Internal;
 
 /**
+ * 使用作为一个虚拟的KeySelector用于的keyed算子对于non-keyed使用用例。
  * Used as a dummy {@link KeySelector} to allow using keyed operators
- * for non-keyed use cases. Essentially, it gives all incoming records
+ * for non-keyed use cases.
+ * 本质上，它给全部传入记录一个相同的key，这是{@code（byte）0}的值
+ * Essentially, it gives all incoming records
  * the same key, which is a {@code (byte) 0} value.
  *
  * @param <T> The type of the input element.

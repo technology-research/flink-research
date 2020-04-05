@@ -30,6 +30,9 @@ import java.io.Serializable;
  *
  * <p>The extractor takes an object and returns the deterministic key for that object.
  *
+ * 该KeySelector允许使用确定性的对象为诸如reduce，reduceGroup，join，coGroup等，如果多次调用同一个对象上，返回键必须是相同的操作。
+ * 该提取需要一个对象，并返回该对象的确定键。
+ * 键选择器
  * @param <IN> Type of objects to extract the key from.
  * @param <KEY> Type of key.
  */
@@ -39,7 +42,7 @@ public interface KeySelector<IN, KEY> extends Function, Serializable {
 
 	/**
 	 * User-defined function that deterministically extracts the key from an object.
-	 *
+	 * 用户定义函数决定了来着一个对象提取的key
 	 * <p>For example for a class:
 	 * <pre>
 	 * 	public class Word {

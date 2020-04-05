@@ -30,6 +30,10 @@ import java.lang.annotation.Target;
  * tables based on key prefixes. A config option is assigned to a {@link ConfigGroup} if the option key matches
  * the group prefix. If a key matches multiple prefixes the longest matching prefix takes priority. An option is never
  * assigned to multiple groups. Options that don't match any group are implicitly added to a default group.
+ *
+ * 在含有配置optionss，使选项成基于关键的前缀不同的表分离类使用注释。 配置选项被分配到一个ConfigGroup如果选项键组前缀匹配。
+ * 如果一个关键多个前缀匹配的最长前缀匹配优先。 一个选项是永远不会分配给多个组。 不符合任何组的选项默认添加到默认组。
+ *
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

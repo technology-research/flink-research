@@ -46,7 +46,7 @@ import java.util.List;
 
 /**
  * A PlanExecutor that runs Flink programs on a local embedded Flink runtime instance.
- *
+ * 在本地嵌入式Flink运行时实例上运行Flink程序的PlanExecutor
  * <p>By simply calling the {@link #executePlan(org.apache.flink.api.common.Plan)} method,
  * this executor still start up and shut down again immediately after the program finished.</p>
  *

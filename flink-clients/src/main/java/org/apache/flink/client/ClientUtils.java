@@ -24,11 +24,14 @@ import java.net.URISyntaxException;
 
 /**
  * A class that provides some utility methods.
+ * 提供一些实用程序方法的类。
+ * 客户端工具类
  */
 public class ClientUtils {
 	/**
+	 * 使用方法转换一个字符串"host:port"格式为InetSocketAddress格式
 	 * Utility method that converts a string of the form "host:port" into an {@link InetSocketAddress}.
-	 * The returned InetSocketAddress may be unresolved!
+	 * The returned InetSocketAddress may be unresolved! 返回的InetSocketAddress可能无法解析！
 	 *
 	 * @param hostport The "host:port" string.
 	 * @return The converted InetSocketAddress.

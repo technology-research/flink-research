@@ -23,12 +23,26 @@ import org.apache.flink.api.common.JobID;
 
 /**
  * Hooks for job submission and execution which is invoked in client side.
+ * 在客户端调用作业提交和执行的钩子函数
  */
 public interface JobListener {
 
+	/**
+	 * 在作业提交之后
+	 * @param jobId
+	 */
 	void onJobSubmitted(JobID jobId);
 
+	/**
+	 * 在作业执行之后
+	 * @param jobResult
+	 */
 	void onJobExecuted(JobExecutionResult jobResult);
 
+	/**
+	 * 在作业取消之后
+	 * @param jobId
+	 * @param savepointPath
+	 */
 	void onJobCanceled(JobID jobId, String savepointPath);
 }

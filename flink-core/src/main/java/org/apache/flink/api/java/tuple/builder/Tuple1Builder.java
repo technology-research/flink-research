@@ -39,13 +39,22 @@ public class Tuple1Builder<T0> {
 
 	private List<Tuple1<T0>> tuples = new ArrayList<>();
 
-	public Tuple1Builder<T0> add(T0 value0){
+	public Tuple1Builder<T0> add(T0 value0) {
 		tuples.add(new Tuple1<>(value0));
 		return this;
 	}
 
 	@SuppressWarnings("unchecked")
-	public Tuple1<T0>[] build(){
+	public Tuple1<T0>[] build() {
 		return tuples.toArray(new Tuple1[tuples.size()]);
+	}
+
+	//构造多个tuple
+	public static void main(String[] args) {
+		Tuple1Builder<String> stringTuple1Builder = new Tuple1Builder<>();
+		Tuple1<String>[] build = stringTuple1Builder.build();
+		for (Tuple1<String> stringTuple1 : build) {
+			System.out.println(stringTuple1.f0);
+		}
 	}
 }

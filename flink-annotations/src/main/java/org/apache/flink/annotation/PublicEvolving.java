@@ -33,6 +33,9 @@ import java.lang.annotation.Target;
  * <p>This annotation also excludes methods and classes with evolving interfaces / signatures
  * within classes annotated with {@link Public}.
  *
+ * 标注来标记的类和方法，供市民使用，但与不断变化的接口。
+ * 类和方法与此注释旨在供公众使用，并有稳定的表现。 然而，它们的接口和签名不被认为是稳定的，可能不同版本进行更改。
+ * 这个注解也排除方法和类与注解的类内演变接口/签名Public 。
  */
 @Documented
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.CONSTRUCTOR })
